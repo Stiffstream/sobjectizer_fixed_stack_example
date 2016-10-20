@@ -3,7 +3,7 @@ require 'mxx_ru/cpp'
 
 MxxRu::Cpp::composite_target( MxxRu::BUILD_ROOT ) {
 
-  toolset.force_cpp14
+  toolset.force_cpp11
   global_include_path "."
 
   if 'gcc' == toolset.name || 'clang' == toolset.name
