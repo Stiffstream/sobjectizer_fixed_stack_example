@@ -25,7 +25,7 @@ sudo gem install Mxx_ru
 ::bash
 # Забираем исходники Mercurial-ом
 hg clone https://bitbucket.org/sobjectizerteam/fixed_stack_example
-cd habrhabr_article_overload
+cd fixed_stack_example
 # Забираем все необходимые зависимости.
 mxxruexternals
 # Компилируем.
