@@ -70,7 +70,7 @@ int main()
     so_5::launch( []( so_5::environment_t & env ) {
       so_5::mbox_t stack;
       env.introduce_coop( [&stack]( so_5::coop_t & coop ) {
-        stack = coop.make_agent< fixed_stack >( 5 )->so_direct_mbox();
+        stack = coop.make_agent< fixed_stack >( 5u )->so_direct_mbox();
       } );
 
       for( int i = 0; i < 10; ++i )
@@ -88,6 +88,8 @@ int main()
 
       env.stop();
     } );
+
+    return 0;
   }
   catch( const std::exception & x )
   {
