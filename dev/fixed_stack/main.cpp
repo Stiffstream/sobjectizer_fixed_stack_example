@@ -2,47 +2,64 @@
 
 #include <so_5/all.hpp>
 
-class fixed_stack : public so_5::agent_t
+class fixed_stack final : public so_5::agent_t
 {
-  state_t st_empty{ this }, st_filled{ this }, st_full{ this };
+  state_t st_empty{ this },
+          st_filled{ this },
+          st_full{ this };
  
   const size_t m_max_size;
   std::vector< int > m_stack;
  
 public :
-  class empty_stack : public std::logic_error
+  class empty_stack final : public std::logic_error
   {
   public :
     using std::logic_error::logic_error;
   };
 
-  fixed_stack( context_t ctx, size_t max_size )
-    : so_5::agent_t( ctx ), m_max_size( max_size )
-    {}
- 
   struct push { int m_val; };
   struct pop : public so_5::signal_t {};
  
-  virtual void so_define_agent() override
+  fixed_stack( context_t ctx, size_t max_size )
+    : so_5::agent_t( ctx )
+    , m_max_size( max_size )
   {
     this >>= st_empty;
  
-    so_subscribe_self().in( st_empty ).in( st_filled )
-      .event( [this]( const push & w ) {
-          m_stack.push_back( w.m_val );
-          this >>= ( m_stack.size() == m_max_size ? st_full : st_filled );
-        } );
+    so_subscribe_self()
+      .in( st_empty )
+      .in( st_filled )
+      .event( &fixed_stack::on_push );
  
-    so_subscribe_self().in( st_filled ).in( st_full )
-      .event< pop >( [this]() -> int {
-          auto r = m_stack.back();
-          m_stack.pop_back();
-          this >>= ( m_stack.empty() ? st_empty : st_filled );
-          return r;
-        } );
+    so_subscribe_self()
+      .in( st_filled )
+      .in( st_full )
+      .event( &fixed_stack::on_pop_when_not_empty );
  
-    so_subscribe_self().in( st_empty )
-      .event< pop >( []() -> int { throw empty_stack( "empty_stack" ); } );
+    so_subscribe_self()
+      .in( st_empty )
+      .event( &fixed_stack::on_pop_when_empty );
+  }
+
+private :
+  void on_push( const push & w )
+  {
+    m_stack.push_back( w.m_val );
+    this >>= ( m_stack.size() == m_max_size ? st_full : st_filled );
+  }
+ 
+  int on_pop_when_not_empty( mhood_t< pop > )
+  {
+    auto r = m_stack.back();
+    m_stack.pop_back();
+    this >>= ( m_stack.empty() ? st_empty : st_filled );
+    return r;
+  }
+ 
+  int on_pop_when_empty( mhood_t< pop > )
+  {
+    throw empty_stack( "empty_stack" );
   }
 };  
 
