@@ -1,9 +1,11 @@
 #include <iostream>
 
 #include <so_5/all.hpp>
+#include <so_5_extra/sync/pub.hpp>
 
-class fixed_stack final : public so_5::agent_t
-{
+using namespace std::chrono_literals;
+
+class fixed_stack final : public so_5::agent_t {
   state_t st_empty{ this },
           st_filled{ this },
           st_full{ this };
@@ -12,14 +14,15 @@ class fixed_stack final : public so_5::agent_t
   std::vector< int > m_stack;
  
 public :
-  class empty_stack final : public std::logic_error
-  {
-  public :
-    using std::logic_error::logic_error;
-  };
+  struct push final { int m_val; };
 
-  struct push { int m_val; };
-  struct pop : public so_5::signal_t {};
+  struct value final { int m_val; };
+  struct stack_empty final {};
+
+  using pop_reply = std::variant<value, stack_empty>;
+
+  struct pop final {};
+  using pop_request = so_5::extra::sync::request_reply_t<pop, pop_reply>;
  
   fixed_stack( context_t ctx, size_t max_size )
     : so_5::agent_t( ctx )
@@ -43,60 +46,48 @@ public :
   }
 
 private :
-  void on_push( const push & w )
-  {
+  void on_push( const push & w ) {
     m_stack.push_back( w.m_val );
-    this >>= ( m_stack.size() == m_max_size ? st_full : st_filled );
+    so_change_state( m_stack.size() == m_max_size ? st_full : st_filled );
   }
  
-  int on_pop_when_not_empty( mhood_t< pop > )
-  {
+  void on_pop_when_not_empty( typename pop_request::request_mhood_t cmd ) {
     auto r = m_stack.back();
     m_stack.pop_back();
-    this >>= ( m_stack.empty() ? st_empty : st_filled );
-    return r;
+    so_change_state( m_stack.empty() ? st_empty : st_filled );
+    cmd->make_reply( value{r} );
   }
  
-  int on_pop_when_empty( mhood_t< pop > )
-  {
-    throw empty_stack( "empty_stack" );
+  void on_pop_when_empty( typename pop_request::request_mhood_t cmd ) {
+    cmd->make_reply( stack_empty{} );
   }
 };  
 
-int main()
-{
-  try
-  {
-    so_5::launch( []( so_5::environment_t & env ) {
-      so_5::mbox_t stack;
-      env.introduce_coop( [&stack]( so_5::coop_t & coop ) {
-        stack = coop.make_agent< fixed_stack >( 5u )->so_direct_mbox();
-      } );
-
-      for( int i = 0; i < 10; ++i )
-        so_5::send< fixed_stack::push >( stack, i );
-
-      std::cout << "stack { ";
-      try
-      {
-        for(;;)
-          std::cout << so_5::request_value< int, fixed_stack::pop >(
-              stack, std::chrono::seconds(10) ) << " ";
-      }
-      catch( const fixed_stack::empty_stack & ) {}
-      std::cout << "}" << std::endl;
-
-      env.stop();
+int main() {
+  so_5::launch( []( so_5::environment_t & env ) {
+    so_5::mbox_t stack = env.introduce_coop( []( so_5::coop_t & coop ) {
+        return coop.make_agent<fixed_stack>( 5u )->so_direct_mbox();
     } );
 
-    return 0;
-  }
-  catch( const std::exception & x )
-  {
-    std::cerr << "Oops! " << x.what() << std::endl;
-  }
+    // Fill stack.
+    for( int i = 0; i < 10; ++i )
+      so_5::send< fixed_stack::push >( stack, i );
 
-  return 2;
+    // Drain stack.
+    std::cout << "stack { ";
+    for(;;) {
+      const auto r = fixed_stack::pop_request::ask_value( stack, 10s );
+      if( auto * v = std::get_if<fixed_stack::value>( &r ) )
+        std::cout << v->m_val << " ";
+      else
+        break;
+    }
+    std::cout << "}" << std::endl;
+
+    env.stop();
+  } );
+
+  return 0;
 }
 
 // vim:fenc=utf8:ts=2:sts=2:sw=2:expandtab

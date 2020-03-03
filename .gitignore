@@ -4,7 +4,7 @@ syntax: glob
 *.swp
 dev/target
 dev/so_5
-dev/timertt
+dev/so_5_extra
 dev/__*.vim
 *.sublime-project
 *.sublime-workspace
