@@ -1,50 +1,33 @@
-# Что это?
+# What is it?
 
-Это реализация примера fixed_stack из дистрибутива C++ Actor Framework, но на SObjectizer-5.5.
+This is an implementation of fixed_stack example from C++ Actor Framework distributive, but using SObjectizer-5.7 and so5extra.
 
-# Как взять и попробовать?
+# How to get and try?
 
-Для компиляции примера потребуется Ruby, RubyGems и Rake. Обычно все эти инструменты идут в одном пакете. Но может потребоваться устанавливать их по отдельности. Например:
-~~~~~
-::bash
+To compile the example Ruby, RubyGems and Rake are required. Usually they are available from the single package, but sometimes it can be necessary to install them manually. For example:
+
+```sh
 sudo apt install ruby
 sudo apt install rake
-~~~~~
-После установки Ruby (+RubyGems+Rake) нужно установить Mxx_ru:
-~~~~~
-::bash
+```
+After installing of Ruby (+RubyGems+Rake) it is necessary to install Mxx_ru:
+```sh
 gem install Mxx_ru
-~~~~~
-Или, если gem требует прав администратора:
-~~~~~
-::bash
+```
+Or, if root privilegies are required:
+```sh
 sudo gem install Mxx_ru
-~~~~~
-После этого можно забрать исходный код примера с BitBucket-а и компилировать:
-~~~~~
-::bash
-# Забираем исходники Mercurial-ом
-hg clone https://bitbucket.org/sobjectizerteam/fixed_stack_example
-cd fixed_stack_example
-# Забираем все необходимые зависимости.
-mxxruexternals
-# Компилируем.
-cd dev
-ruby build.rb
-~~~~~
-Либо же, без Mercurial-а:
-~~~~~
-::bash
-# Забираем и распаковываем исходники
-wget https://bitbucket.org/sobjectizerteam/fixed_stack_example/get/tip.tar.bz2
-tar xaf tip.tar.bz2
-cd <каталог, который получился после распаковки>
-# Забираем все необходимые зависимости.
-mxxruexternals
-# Компилируем.
-cd dev
-ruby build.rb
-~~~~~
-В результате компиляции в target/release должно оказаться приложение fixed_stack_app.
+```
 
-Аналогичные действия нужно предпринимать и под Windows.
+Now you can get the source code from GitHub and compile it:
+```sh
+# Get the sources.
+git clone https://github.com/Stiffstream/sobjectizer_fixed_stack_example
+cd sobjectizer_fixed_stack_example
+# Get the dependencies.
+mxxruexternals
+# Compile.
+cd dev
+ruby build.rb
+```
+As result of the compilation there will be `fixed_stack_app` executable in `target/release` folder.
